@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="DBFirstApp/DBFirstApp.csproj" Id="e8ebfc2c-32fe-47b0-aac4-9e1d3f4b1c83" />
   <Project Path="Lab1/Lab1.csproj" />
   <Project Path="Lab2/Lab2.csproj" Id="f31f6d56-5e7d-4656-b00b-b4f4859ac9b0" />
+  <Project Path="Lab3/Lab3.csproj" Id="4ae1af50-c520-4f60-ae5d-6521527943d4" />
+  <Project Path="Lab4/Lab4.csproj" Id="98451c90-6bf0-4326-901f-a3f880ce89f0" />
 </Solution>
