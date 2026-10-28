@@ -33,7 +33,7 @@ namespace DBFirstApp
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
+                pattern: "{controller=Learners}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
             app.Run();

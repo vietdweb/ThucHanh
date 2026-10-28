@@ -1,149 +1,166 @@
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DBFirstApp.Models;
 
-public class LearnersController : Controller
+namespace DBFirstApp.Controllers
 {
-    private readonly SchoolContext _context;
-
-    public LearnersController(SchoolContext context)
+    public class LearnersController : Controller
     {
-        _context = context;
-    }
+        private readonly SchoolContext _context;
 
-    // GET: LEARNERS
-    public async Task<IActionResult> Index()    
-    {
-        return View(await _context.Learners.ToListAsync());
-    }
-
-    // GET: LEARNERS/Details/5
-    public async Task<IActionResult> Details(int? learnerid)
-    {
-        if (learnerid == null)
+        public LearnersController(SchoolContext context)
         {
-            return NotFound();
+            _context = context;
         }
 
-        var learner = await _context.Learners
-            .FirstOrDefaultAsync(m => m.LearnerId == learnerid);
-        if (learner == null)
+        // GET: Learners
+        public async Task<IActionResult> Index()
         {
-            return NotFound();
+            var schoolContext = _context.Learners.Include(l => l.Major);
+            return View(await schoolContext.ToListAsync());
         }
 
-        return View(learner);
-    }
-
-    // GET: LEARNERS/Create
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-    // POST: LEARNERS/Create
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("LearnerId,LastName,FirstMidName,EnrollmentDate,MajorId,Enrollments,Major")] Learner learner)
-    {
-        if (ModelState.IsValid)
+        // GET: Learners/Details/5
+        public async Task<IActionResult> Details(int? id)
         {
-            _context.Add(learner);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-        return View(learner);
-    }
-
-    // GET: LEARNERS/Edit/5
-    public async Task<IActionResult> Edit(int? learnerid)
-    {
-        if (learnerid == null)
-        {
-            return NotFound();
-        }
-
-        var learner = await _context.Learners.FindAsync(learnerid);
-        if (learner == null)
-        {
-            return NotFound();
-        }
-        return View(learner);
-    }
-
-    // POST: LEARNERS/Edit/5
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int? learnerid, [Bind("LearnerId,LastName,FirstMidName,EnrollmentDate,MajorId,Enrollments,Major")] Learner learner)
-    {
-        if (learnerid != learner.LearnerId)
-        {
-            return NotFound();
-        }
-
-        if (ModelState.IsValid)
-        {
-            try
+            if (id == null)
             {
-                _context.Update(learner);
+                return NotFound();
+            }
+
+            var learner = await _context.Learners
+                .Include(l => l.Major)
+                .FirstOrDefaultAsync(m => m.LearnerId == id);
+            if (learner == null)
+            {
+                return NotFound();
+            }
+
+            return View(learner);
+        }
+
+        // GET: Learners/Create
+        public IActionResult Create()
+        {
+            ViewBag.MajorId = new SelectList(_context.Majors, "MajorId", "MajorName");
+            return View();
+        }
+
+        // POST: Learners/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("LearnerId,LastName,FirstMidName,EnrollmentDate,MajorId")] Learner learner)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Add(learner);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            ViewBag.MajorId = new SelectList(_context.Majors, "MajorId", "MajorName", learner.MajorId);
+            return View(learner);
+        }
+
+        // GET: Learners/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var learner = await _context.Learners.FindAsync(id);
+            if (learner == null)
+            {
+                return NotFound();
+            }
+            ViewBag.MajorId = new SelectList(_context.Majors, "MajorId", "MajorName", learner.MajorId);
+            return View(learner);
+        }
+
+        // POST: Learners/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("LearnerId,LastName,FirstMidName,EnrollmentDate,MajorId")] Learner learner)
+        {
+            if (id != learner.LearnerId)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(learner);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!LearnerExists(learner.LearnerId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            ViewBag.MajorId = new SelectList(_context.Majors, "MajorId", "MajorName", learner.MajorId);
+            return View(learner);
+        }
+
+        // GET: Learners/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var learner = await _context.Learners
+                .Include(l => l.Major)
+                .Include(l => l.Enrollments)
+                .FirstOrDefaultAsync(m => m.LearnerId == id);
+            if (learner == null)
+            {
+                return NotFound();
+            }
+
+            // Ràng buộc không xóa nếu người học đã có đăng ký khóa học
+            if (learner.Enrollments.Count > 0)
+            {
+                return Content("This learner has some enrollments, can't delete!");
+            }
+
+            return View(learner);
+        }
+
+        // POST: Learners/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var learner = await _context.Learners.FindAsync(id);
+            if (learner != null)
+            {
+                _context.Learners.Remove(learner);
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!LearnerExists(learner.LearnerId))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+
             return RedirectToAction(nameof(Index));
         }
-        return View(learner);
-    }
 
-    // GET: LEARNERS/Delete/5
-    public async Task<IActionResult> Delete(int? learnerid)
-    {
-        if (learnerid == null)
+        private bool LearnerExists(int id)
         {
-            return NotFound();
+            return _context.Learners.Any(e => e.LearnerId == id);
         }
-
-        var learner = await _context.Learners
-            .FirstOrDefaultAsync(m => m.LearnerId == learnerid);
-        if (learner == null)
-        {
-            return NotFound();
-        }
-
-        return View(learner);
-    }
-
-    // POST: LEARNERS/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int? learnerid)
-    {
-        var learner = await _context.Learners.FindAsync(learnerid);
-        if (learner != null)
-        {
-            _context.Learners.Remove(learner);
-        }
-
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-
-    private bool LearnerExists(int? learnerid)
-    {
-        return _context.Learners.Any(e => e.LearnerId == learnerid);
     }
 }

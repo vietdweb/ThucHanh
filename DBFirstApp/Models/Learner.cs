@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace DBFirstApp.Models;
 
@@ -15,7 +16,9 @@ public partial class Learner
 
     public int MajorId { get; set; }
 
+    [ValidateNever]
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
-    public virtual Major Major { get; set; } = null!;
+    [ValidateNever]
+    public virtual Major? Major { get; set; }
 }
