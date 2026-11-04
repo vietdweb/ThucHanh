@@ -18,7 +18,7 @@
                 <td>@s.LearnerID</td>
                 <td>@s.FirstMidName</td>
                 <td>@s.LastName</td>
-                <td>@s.Major.MajorName</td>
+                <td>@s.Major?.MajorName</td>
                 <td>@s.EnrollmentDate</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@s.LearnerID">Edit</a> |
@@ -28,3 +28,15 @@
         }
     </tbody>
 </table>
+
+<!-- Thanh nav-phân trang cập nhật động theo kết quả lọc -->
+<ul class="pagination">
+    @for (int i = 1; i <= ViewBag.pageNum; i++)
+    {
+        <li class="page-item" style="cursor: pointer;" page="@i"
+            @(ViewBag.mid != null ? $"mid={ViewBag.mid}" : "")
+            @(ViewBag.keyword != null ? $"keyword={ViewBag.keyword}" : "")>
+            <a class="page-link">@i</a>
+        </li>
+    }
+</ul>

@@ -1,13 +1,26 @@
 @{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/MyLayout.cshtml"; // hoặc MyLayoutHelper.cshtml tùy layout đang dùng
+    ViewData["Title"] = "Learner List";
+    Layout = "~/Views/Shared/MyLayout.cshtml";
 }
 @model IEnumerable<Learner>
 
 <div class="ms-2 mx-2">
     <h1>Learner List</h1>
+    
+    @* Danh sách chuyên ngành từ ViewComponent *@
     @await Component.InvokeAsync("Major")
 
+    <!-- Form tìm kiếm sinh viên theo tên -->
+    <div class="my-3">
+        <div class="input-group" style="max-width: 350px;">
+            <input id="keyword" class="form-control" name="keyword" type="text" placeholder="Search learner" />
+            <button id="btnSearch" class="btn btn-primary" type="button">
+                <i class="fas fa-search"></i> Tìm
+            </button>
+        </div>
+    </div>
+
+    <!-- Khối bao bọc bảng dữ liệu & phân trang để load qua AJAX -->
     <div id="content">
         <table class="table table-striped">
             <thead>
@@ -27,7 +40,7 @@
                         <td>@s.LearnerID</td>
                         <td>@s.FirstMidName</td>
                         <td>@s.LastName</td>
-                        <td>@s.Major.MajorName</td>
+                        <td>@s.Major?.MajorName</td>
                         <td>@s.EnrollmentDate</td>
                         <td>
                             <a asp-action="Edit" asp-route-id="@s.LearnerID">Edit</a> |
@@ -37,24 +50,71 @@
                 }
             </tbody>
         </table>
+
+        <!-- Thanh phân trang ban đầu cho trang Index -->
+        <ul class="pagination">
+            @for (int i = 1; i <= ViewBag.pageNum; i++)
+            {
+                <li class="page-item" style="cursor: pointer;" page="@i"
+                    @(ViewBag.mid != null ? $"mid={ViewBag.mid}" : "")
+                    @(ViewBag.keyword != null ? $"keyword={ViewBag.keyword}" : "")>
+                    <a class="page-link">@i</a>
+                </li>
+            }
+        </ul>
     </div>
 
-    <a asp-action="Create" class="btn btn-primary">Create New Student</a>
+    <a asp-action="Create" class="btn btn-primary mt-2">Create New Student</a>
 </div>
 
 @section Scripts {
     <script>
-        $("li").click(function (e) {
+        // 1. Click vào số trang trên thanh phân trang (dùng delegated event để nhận diện DOM mới sinh ra từ AJAX)
+        $('body').on('click', 'li.page-item', function (e) {
+            e.preventDefault();
+            var page = $(this).attr("page");
+            var mid = $(this).attr("mid");
+            var keyword = $(this).attr("keyword");
+            
+            var data = { mid: mid, keyword: keyword, pageIndex: page };
+            $.ajax({
+                url: "/Learner/LearnerFilter",
+                data: data,
+                success: function (response) {
+                    $("div#content").html(response);
+                }
+            });
+        });
+
+        // 2. Click vào từng chuyên ngành phía trên
+        $(".nav li").click(function (e) {
+            e.preventDefault();
             var id = $(this).attr("id");
-            if (id) {
-                $.ajax({
-                    url: "/Learner/LearnerByMajorID",
-                    data: { mid: id },
-                    success: function (response) {
-                        $("div#content").html(response);
-                    }
-                });
-            }
+            var keyword = $("#keyword").val();
+            
+            var data = { mid: id, keyword: keyword, pageIndex: 1 };
+            $.ajax({
+                url: "/Learner/LearnerFilter",
+                data: data,
+                success: function (response) {
+                    $("div#content").html(response);
+                }
+            });
+        });
+
+        // 3. Click nút tìm kiếm
+        $("button#btnSearch").click(function (e) {
+            e.preventDefault();
+            var keyword = $("#keyword").val();
+            
+            var data = { keyword: keyword, pageIndex: 1 };
+            $.ajax({
+                url: "/Learner/LearnerFilter",
+                data: data,
+                success: function (response) {
+                    $("div#content").html(response);
+                }
+            });
         });
     </script>
 }
